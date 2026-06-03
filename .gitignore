@@ -1,0 +1,13 @@
+# APIキー・環境変数
+.env
+.env.local
+.env*.local
+
+# MacOSシステムファイル
+.DS_Store
+
+# エディタ設定
+.vscode/settings.json
+
+# ログファイル
+*.log
