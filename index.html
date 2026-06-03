@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f0f0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="せどり">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>せどりアシスタント</title>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --bg2: #1a1a1a;
+    --bg3: #242424;
+    --border: #2e2e2e;
+    --border2: #3a3a3a;
+    --text: #f0f0f0;
+    --text2: #999;
+    --text3: #666;
+    --accent: #FF5A1F;
+    --accent2: #ff7a45;
+    --success: #22c55e;
+    --info: #3b82f6;
+    --r: 12px;
+    --rm: 8px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bot: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+    min-height: 100dvh;
+    padding-top: var(--safe-top);
+    padding-bottom: calc(var(--safe-bot) + 70px);
+  }
+
+  /* Header */
+  .header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(15,15,15,0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .header-logo {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700; color: white; letter-spacing: -0.5px;
+  }
+  .header-title { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+  .header-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+  .header-texts { flex: 1; }
+
+  /* Bottom nav */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(15,15,15,0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding-bottom: var(--safe-bot);
+  }
+  .nav-item {
+    flex: 1; padding: 10px 4px 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    background: none; border: none; color: var(--text3);
+    font-size: 10px; cursor: pointer; transition: color 0.15s;
+  }
+  .nav-item.active { color: var(--accent); }
+  .nav-icon { font-size: 22px; line-height: 1; }
+
+  /* Pages */
+  .page { display: none; padding: 16px; }
+  .page.active { display: block; }
+
+  /* Cards */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-size: 12px; font-weight: 600;
+    color: var(--text3); letter-spacing: 0.08em;
+    text-transform: uppercase; margin-bottom: 12px;
+  }
+
+  /* Photo upload */
+  .upload-zone {
+    border: 1.5px dashed var(--border2);
+    border-radius: var(--r);
+    padding: 28px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+  }
+  .upload-zone:active { background: var(--bg3); border-color: var(--accent); }
+  .upload-zone input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .upload-icon { font-size: 36px; margin-bottom: 8px; }
+  .upload-text { font-size: 14px; color: var(--text2); }
+  .upload-sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
+
+  .preview-img {
+    width: 100%; max-height: 220px; object-fit: cover;
+    border-radius: var(--rm); margin-bottom: 12px;
+  }
+
+  /* Tab switcher */
+  .tabs {
+    display: flex; gap: 6px; margin-bottom: 14px;
+    background: var(--bg3); border-radius: var(--rm); padding: 3px;
+  }
+  .tab {
+    flex: 1; padding: 8px 4px;
+    border: none; border-radius: 6px;
+    background: none; color: var(--text2);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tab.active {
+    background: var(--bg2); color: var(--text);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+
+  /* Form fields */
+  .field { margin-bottom: 10px; }
+  .field label {
+    display: block; font-size: 11px; color: var(--text3);
+    font-weight: 600; letter-spacing: 0.04em;
+    text-transform: uppercase; margin-bottom: 5px;
+  }
+  .field input, .field select, .field textarea {
+    width: 100%; background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--rm); color: var(--text);
+    font-size: 15px; padding: 10px 12px;
+    font-family: inherit;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: none; border-color: var(--accent);
+  }
+  .field select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23666' d='M6 8L0 0h12z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+  .field textarea { height: 70px; resize: none; line-height: 1.5; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  /* Buttons */
+  .btn-primary {
+    width: 100%; padding: 14px;
+    background: var(--accent); color: white;
+    border: none; border-radius: var(--r);
+    font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: all 0.15s;
+    letter-spacing: 0.02em;
+  }
+  .btn-primary:active { transform: scale(0.98); background: var(--accent2); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .btn-secondary {
+    flex: 1; padding: 11px;
+    background: var(--bg3); color: var(--text2);
+    border: 1px solid var(--border); border-radius: var(--rm);
+    font-size: 13px; cursor: pointer; transition: all 0.15s;
+    font-family: inherit;
+  }
+  .btn-secondary:active { background: var(--border); }
+
+  .btn-info {
+    flex: 1; padding: 11px;
+    background: rgba(59,130,246,0.12); color: var(--info);
+    border: 1px solid rgba(59,130,246,0.25); border-radius: var(--rm);
+    font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+    font-family: inherit; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 4px;
+  }
+  .btn-info:active { background: rgba(59,130,246,0.2); }
+
+  .btn-success {
+    padding: 8px 14px;
+    background: rgba(34,197,94,0.12); color: var(--success);
+    border: 1px solid rgba(34,197,94,0.25); border-radius: var(--rm);
+    font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+    font-family: inherit; white-space: nowrap;
+  }
+  .btn-success:active { background: rgba(34,197,94,0.2); }
+
+  /* Loading */
+  .loading {
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px; padding: 20px; color: var(--text2); font-size: 14px;
+  }
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Result */
+  .result-section { margin-top: 14px; }
+  .result-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .result-label { font-size: 11px; color: var(--text3); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+  .result-text {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--rm); padding: 12px 14px;
+    font-size: 14px; color: var(--text); line-height: 1.6;
+    white-space: pre-wrap; word-break: break-all;
+  }
+  .char-badge {
+    font-size: 10px; color: var(--text3);
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 4px; padding: 2px 6px;
+  }
+
+  .action-row { display: flex; gap: 8px; margin-top: 8px; }
+
+  /* Tag badge */
+  .tag {
+    display: inline-block; padding: 3px 8px;
+    border-radius: 4px; font-size: 11px; font-weight: 600;
+    background: rgba(255,90,31,0.12); color: var(--accent);
+    border: 1px solid rgba(255,90,31,0.25);
+  }
+
+  /* Analyze result chips */
+  .chip-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .chip {
+    background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: 6px; padding: 5px 10px;
+    font-size: 12px; color: var(--text2);
+  }
+  .chip strong { color: var(--text); }
+
+  /* Mercari search btn */
+  .mercari-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 13px;
+    background: rgba(255,90,31,0.1); color: var(--accent);
+    border: 1.5px solid rgba(255,90,31,0.3); border-radius: var(--r);
+    font-size: 14px; font-weight: 700; text-decoration: none;
+    transition: all 0.15s; cursor: pointer; font-family: inherit;
+    letter-spacing: 0.02em;
+  }
+  .mercari-btn:active { background: rgba(255,90,31,0.2); }
+
+  /* History page */
+  .history-item {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--r); padding: 14px; margin-bottom: 10px;
+    cursor: pointer; transition: border-color 0.15s;
+  }
+  .history-item:active { border-color: var(--accent); }
+  .history-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .history-type { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; }
+  .history-date { font-size: 11px; color: var(--text3); }
+  .history-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .history-preview { font-size: 12px; color: var(--text2); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--text3); }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-text { font-size: 14px; }
+
+  /* API key */
+  .apikey-banner {
+    background: rgba(255,90,31,0.08);
+    border: 1px solid rgba(255,90,31,0.2);
+    border-radius: var(--rm); padding: 12px 14px;
+    margin-bottom: 14px; font-size: 13px; color: var(--text2);
+    display: flex; align-items: flex-start; gap: 8px;
+  }
+  .apikey-banner.ok { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.2); }
+  .key-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-top: 4px; flex-shrink: 0; }
+  .key-dot.ok { background: var(--success); }
+
+  /* Divider */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+  .section-gap { height: 8px; }
+  .mt { margin-top: 10px; }
+
+  /* Analyze icon button */
+  .analyze-btn-wrap { position: relative; }
+  .float-tag { position: absolute; top: -8px; right: -8px; background: var(--accent); color: white; font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-logo">せ</div>
+  <div class="header-texts">
+    <div class="header-title">せどりアシスタント</div>
+    <div class="header-sub">メルカリ出品サポートツール</div>
+  </div>
+</div>
+
+<!-- Pages -->
+<div id="page-generate" class="page active">
+
+  <!-- API Key -->
+  <div id="apikey-banner" class="apikey-banner">
+    <div class="key-dot" id="key-dot"></div>
+    <div>
+      <div style="font-weight:600;color:var(--text);margin-bottom:3px;">Anthropic APIキーを設定してください</div>
+      <div>設定ページでAPIキーを入れると出品文の自動生成が使えます</div>
+    </div>
+  </div>
+
+  <!-- Photo upload -->
+  <div class="card">
+    <div class="card-title">📷 写真から商品情報を読み取る</div>
+    <div class="upload-zone" id="upload-zone">
+      <input type="file" accept="image/*" capture="environment" id="photo-input" onchange="handlePhoto(this)">
+      <div class="upload-icon" id="upload-icon">📸</div>
+      <div class="upload-text" id="upload-text">タップして写真を選ぶ</div>
+      <div class="upload-sub" id="upload-sub">商品・ブランドタグ・バーコードなど</div>
+    </div>
+    <img id="preview-img" class="preview-img" style="display:none;">
+    <button class="btn-primary mt" id="analyze-btn" onclick="analyzePhoto()" style="display:none;">
+      🔍 AIで商品情報を読み取る
+    </button>
+    <div id="analyze-loading" style="display:none;" class="loading">
+      <div class="spinner"></div> AIが写真を解析中...
+    </div>
+    <div id="analyze-result" style="display:none;">
+      <hr class="divider">
+      <div class="card-title">📋 読み取り結果</div>
+      <div class="chip-grid" id="chip-grid"></div>
+      <button class="btn-primary" onclick="fillForm()" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);">
+        ↓ フォームに自動入力する
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchMode('book')">📚 古本</button>
+    <button class="tab" onclick="switchMode('apparel')">👕 アパレル</button>
+  </div>
+
+  <!-- Book form -->
+  <div id="form-book" class="card">
+    <div class="card-title">📚 古本情報</div>
+    <div class="field">
+      <label>書名 *</label>
+      <input type="text" id="b-title" placeholder="例：ファクトフルネス">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>著者名</label>
+        <input type="text" id="b-author" placeholder="例：ハンス・ロスリング">
+      </div>
+      <div class="field">
+        <label>出版社</label>
+        <input type="text" id="b-publisher" placeholder="例：日経BP">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>ジャンル *</label>
+        <select id="b-genre">
+          <option value="">選択</option>
+          <option>ビジネス・経営</option>
+          <option>自己啓発</option>
+          <option>小説・文学</option>
+          <option>実用・ハウツー</option>
+          <option>学習参考書</option>
+          <option>専門書・技術書</option>
+          <option>漫画</option>
+          <option>絵本・児童書</option>
+          <option>その他</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>状態 *</label>
+        <select id="b-condition">
+          <option value="">選択</option>
+          <option>未使用に近い</option>
+          <option>目立った傷や汚れなし</option>
+          <option>やや傷や汚れあり</option>
+          <option>傷や汚れあり</option>
+          <option>全体的に状態が悪い</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>ダメージ・気になる点</label>
+      <input type="text" id="b-damage" placeholder="例：表紙に折れあり、書き込みなし">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>定価（円）</label>
+        <input type="number" id="b-price" placeholder="1500">
+      </div>
+      <div class="field">
+        <label>出品価格（円）*</label>
+        <input type="number" id="b-sell-price" placeholder="500">
+      </div>
+    </div>
+    <div class="field">
+      <label>セールスポイント</label>
+      <input type="text" id="b-memo" placeholder="例：帯付き、話題の一冊">
+    </div>
+  </div>
+
+  <!-- Apparel form -->
+  <div id="form-apparel" class="card" style="display:none;">
+    <div class="card-title">👕 アパレル情報</div>
+    <div class="field-row">
+      <div class="field">
+        <label>ブランド *</label>
+        <input type="text" id="a-brand" placeholder="例：UNIQLO">
+      </div>
+      <div class="field">
+        <label>アイテム *</label>
+        <input type="text" id="a-item" placeholder="例：テーラードジャケット">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>サイズ *</label>
+        <input type="text" id="a-size" placeholder="例：M">
+      </div>
+      <div class="field">
+        <label>色 *</label>
+        <input type="text" id="a-color" placeholder="例：ネイビー">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>カテゴリ</label>
+        <select id="a-category">
+          <option value="">選択</option>
+          <option>トップス</option>
+          <option>ボトムス</option>
+          <option>アウター</option>
+          <option>ワンピース・スカート</option>
+          <option>シューズ</option>
+          <option>バッグ</option>
+          <option>小物・アクセサリー</option>
+          <option>その他</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>性別</label>
+        <select id="a-gender">
+          <option value="">選択</option>
+          <option>レディース</option>
+          <option>メンズ</option>
+          <option>ユニセックス</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>素材</label>
+        <input type="text" id="a-material" placeholder="例：コットン100%">
+      </div>
+      <div class="field">
+        <label>状態 *</label>
+        <select id="a-condition">
+          <option value="">選択</option>
+          <option>未使用に近い</option>
+          <option>目立った傷や汚れなし</option>
+          <option>やや傷や汚れあり</option>
+          <option>傷や汚れあり</option>
+          <option>全体的に状態が悪い</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>ダメージ・気になる点</label>
+      <input type="text" id="a-damage" placeholder="例：右袖口に薄いシミ">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>出品価格（円）*</label>
+        <input type="number" id="a-sell-price" placeholder="2000">
+      </div>
+      <div class="field">
+        <label>セールスポイント</label>
+        <input type="text" id="a-memo" placeholder="例：希少カラー、タグあり">
+      </div>
+    </div>
+  </div>
+
+  <!-- Generate button -->
+  <button class="btn-primary" id="gen-btn" onclick="generate()">✨ 出品文を生成する</button>
+  <div id="gen-loading" style="display:none;" class="loading">
+    <div class="spinner"></div> 出品文を生成中...
+  </div>
+  <div id="gen-error" style="display:none;color:#ef4444;font-size:13px;margin-top:8px;"></div>
+
+  <!-- Result -->
+  <div id="result-area" style="display:none;" class="card mt">
+    <div class="card-title">✅ 生成された出品文</div>
+
+    <!-- Mercari search -->
+    <div id="mercari-search-wrap"></div>
+
+    <hr class="divider">
+
+    <div class="result-section">
+      <div class="result-header">
+        <div class="result-label">タイトル</div>
+        <div class="char-badge" id="title-count"></div>
+      </div>
+      <div class="result-text" id="res-title"></div>
+      <div class="action-row mt">
+        <button class="btn-secondary" onclick="copyEl('res-title', this)">コピー</button>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="result-section">
+      <div class="result-label">商品説明文</div>
+      <div class="result-text" id="res-body" style="margin-top:6px;"></div>
+      <div class="action-row mt">
+        <button class="btn-secondary" onclick="copyEl('res-body', this)">コピー</button>
+        <button class="btn-secondary" onclick="generate()">再生成</button>
+        <button class="btn-secondary" onclick="saveHistory()">保存</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- History page -->
+<div id="page-history" class="page">
+  <div class="card-title" style="padding: 4px 0 12px;">📂 保存した出品文</div>
+  <div id="history-list"></div>
+</div>
+
+<!-- Settings page -->
+<div id="page-settings" class="page">
+  <div class="card">
+    <div class="card-title">🔑 APIキー設定</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6;">
+      Anthropic APIキーを設定すると、写真認識・出品文生成が使えます。<br>
+      キーはこの端末のみに保存されます。
+    </div>
+    <div class="field">
+      <label>APIキー</label>
+      <input type="password" id="apikey-input" placeholder="sk-ant-..." autocomplete="off">
+    </div>
+    <button class="btn-primary" onclick="saveApiKey()">保存する</button>
+    <div id="key-status" style="font-size:12px;color:var(--text3);margin-top:8px;"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📊 利益計算ツール</div>
+    <div class="field">
+      <label>仕入れ値（円）</label>
+      <input type="number" id="cost" placeholder="300" oninput="calcProfit()">
+    </div>
+    <div class="field">
+      <label>出品価格（円）</label>
+      <input type="number" id="sell" placeholder="1000" oninput="calcProfit()">
+    </div>
+    <div class="field">
+      <label>送料（円）</label>
+      <input type="number" id="ship" placeholder="210" oninput="calcProfit()">
+    </div>
+    <div id="profit-result" style="display:none;margin-top:4px;">
+      <hr class="divider">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-size:13px;color:var(--text2);">メルカリ手数料 (10%)</div>
+        <div id="fee-val" style="font-size:14px;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-size:13px;color:var(--text2);">純利益</div>
+        <div id="profit-val" style="font-size:18px;font-weight:700;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-size:13px;color:var(--text2);">利益率</div>
+        <div id="margin-val" style="font-size:14px;font-weight:600;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">ℹ️ アプリについて</div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.7;">
+      このアプリは竹川さん専用のせどりサポートツールです。<br>
+      写真から商品情報を自動読み取りし、メルカリ向け出品文を生成します。<br><br>
+      <strong style="color:var(--text);">スマホのホーム画面への追加方法</strong><br>
+      Safari：共有ボタン →「ホーム画面に追加」<br>
+      Chrome：メニュー →「ホーム画面に追加」
+    </div>
+  </div>
+</div>
+
+<!-- Bottom nav -->
+<div class="bottom-nav">
+  <button class="nav-item active" onclick="switchPage('generate', this)">
+    <span class="nav-icon">✨</span>
+    <span>出品文作成</span>
+  </button>
+  <button class="nav-item" onclick="switchPage('history', this)">
+    <span class="nav-icon">📂</span>
+    <span>履歴</span>
+  </button>
+  <button class="nav-item" onclick="switchPage('settings', this)">
+    <span class="nav-icon">⚙️</span>
+    <span>設定</span>
+  </button>
+</div>
+
+<script>
+// State
+let currentMode = 'book';
+let analyzedData = {};
+let photoBase64 = '';
+let photoType = '';
+
+// Init
+window.addEventListener('load', () => {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+  checkApiKey();
+  renderHistory();
+  const saved = localStorage.getItem('apikey-input-val');
+  if (saved) document.getElementById('apikey-input').value = saved;
+});
+
+// API Key
+function getApiKey() { return localStorage.getItem('sedori_apikey') || ''; }
+function checkApiKey() {
+  const k = getApiKey();
+  const banner = document.getElementById('apikey-banner');
+  const dot = document.getElementById('key-dot');
+  if (k) {
+    banner.classList.add('ok');
+    dot.classList.add('ok');
+    banner.querySelector('div > div:first-child').textContent = 'APIキー設定済み ✓';
+    banner.querySelector('div > div:last-child').textContent = '写真認識・出品文生成が使えます';
+  }
+}
+function saveApiKey() {
+  const key = document.getElementById('apikey-input').value.trim();
+  if (!key.startsWith('sk-ant-')) {
+    document.getElementById('key-status').textContent = '⚠️ キーは sk-ant- から始まります';
+    return;
+  }
+  localStorage.setItem('sedori_apikey', key);
+  document.getElementById('key-status').textContent = '✅ 保存しました';
+  checkApiKey();
+  setTimeout(() => document.getElementById('key-status').textContent = '', 2000);
+}
+
+// Navigation
+function switchPage(page, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  btn.classList.add('active');
+  if (page === 'history') renderHistory();
+}
+function switchMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['book','apparel'][i] === mode));
+  document.getElementById('form-book').style.display = mode === 'book' ? 'block' : 'none';
+  document.getElementById('form-apparel').style.display = mode === 'apparel' ? 'block' : 'none';
+  document.getElementById('result-area').style.display = 'none';
+}
+
+// Photo handling
+function handlePhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const dataUrl = e.target.result;
+    photoBase64 = dataUrl.split(',')[1];
+    photoType = file.type || 'image/jpeg';
+    const img = document.getElementById('preview-img');
+    img.src = dataUrl;
+    img.style.display = 'block';
+    document.getElementById('analyze-btn').style.display = 'block';
+    document.getElementById('upload-icon').textContent = '✅';
+    document.getElementById('upload-text').textContent = '写真を変更する';
+    document.getElementById('upload-sub').textContent = file.name;
+    document.getElementById('analyze-result').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function analyzePhoto() {
+  const key = getApiKey();
+  if (!key) { alert('設定ページでAPIキーを登録してください'); return; }
+  if (!photoBase64) return;
+
+  document.getElementById('analyze-btn').style.display = 'none';
+  document.getElementById('analyze-loading').style.display = 'flex';
+
+  const prompt = `この商品の写真を見て、以下の情報を読み取ってください。JSONのみで返してください。
+古本の場合: {"type":"book","title":"書名","author":"著者","publisher":"出版社","genre":"ジャンル","condition":"状態","keywords":"特徴"}
+アパレルの場合: {"type":"apparel","brand":"ブランド","item":"アイテム名","size":"サイズ","color":"色","material":"素材","condition":"状態","gender":"性別","keywords":"特徴"}
+不明な項目は空文字にしてください。状態は「未使用に近い」「目立った傷や汚れなし」「やや傷や汚れあり」「傷や汚れあり」「全体的に状態が悪い」から選んでください。`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514', max_tokens: 500,
+        messages: [{ role: 'user', content: [
+          { type: 'image', source: { type: 'base64', media_type: photoType, data: photoBase64 } },
+          { type: 'text', text: prompt }
+        ]}]
+      })
+    });
+    const data = await res.json();
+    const text = data.content.map(c => c.text || '').join('');
+    const clean = text.replace(/```json|```/g, '').trim();
+    analyzedData = JSON.parse(clean);
+
+    const chips = document.getElementById('chip-grid');
+    chips.innerHTML = '';
+    Object.entries(analyzedData).forEach(([k,v]) => {
+      if (!v || k === 'type') return;
+      const labels = {title:'書名',author:'著者',publisher:'出版社',genre:'ジャンル',condition:'状態',keywords:'特徴',brand:'ブランド',item:'アイテム',size:'サイズ',color:'色',material:'素材',gender:'性別'};
+      chips.innerHTML += `<div class="chip"><strong>${labels[k]||k}:</strong> ${v}</div>`;
+    });
+
+    if (analyzedData.type === 'apparel') switchMode('apparel');
+    else switchMode('book');
+
+    document.getElementById('analyze-result').style.display = 'block';
+  } catch(e) {
+    alert('読み取りに失敗しました。もう一度お試しください。');
+  }
+  document.getElementById('analyze-loading').style.display = 'none';
+  document.getElementById('analyze-btn').style.display = 'block';
+}
+
+function fillForm() {
+  const d = analyzedData;
+  if (d.type === 'book' || d.title) {
+    switchMode('book');
+    if (d.title) document.getElementById('b-title').value = d.title;
+    if (d.author) document.getElementById('b-author').value = d.author;
+    if (d.publisher) document.getElementById('b-publisher').value = d.publisher;
+    if (d.genre) {
+      const sel = document.getElementById('b-genre');
+      [...sel.options].forEach(o => { if (o.text.includes(d.genre) || d.genre.includes(o.text)) sel.value = o.value; });
+    }
+    if (d.condition) {
+      const sel = document.getElementById('b-condition');
+      [...sel.options].forEach(o => { if (o.text === d.condition) sel.value = o.value; });
+    }
+    if (d.keywords) document.getElementById('b-memo').value = d.keywords;
+  } else {
+    switchMode('apparel');
+    if (d.brand) document.getElementById('a-brand').value = d.brand;
+    if (d.item) document.getElementById('a-item').value = d.item;
+    if (d.size) document.getElementById('a-size').value = d.size;
+    if (d.color) document.getElementById('a-color').value = d.color;
+    if (d.material) document.getElementById('a-material').value = d.material;
+    if (d.condition) {
+      const sel = document.getElementById('a-condition');
+      [...sel.options].forEach(o => { if (o.text === d.condition) sel.value = o.value; });
+    }
+    if (d.gender) {
+      const sel = document.getElementById('a-gender');
+      [...sel.options].forEach(o => { if (o.text.includes(d.gender)) sel.value = o.value; });
+    }
+    if (d.keywords) document.getElementById('a-memo').value = d.keywords;
+  }
+  document.getElementById('analyze-result').style.display = 'none';
+}
+
+// Generate
+function getPrompt() {
+  if (currentMode === 'book') {
+    const title = document.getElementById('b-title').value.trim();
+    const author = document.getElementById('b-author').value.trim();
+    const publisher = document.getElementById('b-publisher').value.trim();
+    const genre = document.getElementById('b-genre').value;
+    const condition = document.getElementById('b-condition').value;
+    const damage = document.getElementById('b-damage').value.trim();
+    const price = document.getElementById('b-price').value;
+    const sellPrice = document.getElementById('b-sell-price').value;
+    const memo = document.getElementById('b-memo').value.trim();
+    if (!title || !genre || !condition || !sellPrice) return null;
+    return { prompt: `メルカリで古本を出品します。以下の情報をもとに出品タイトル（40字以内）と商品説明文を作成してください。JSONのみで返してください。{"title":"...","body":"..."}
+書名:${title} 著者:${author||'不明'} 出版社:${publisher||'不明'} ジャンル:${genre} 状態:${condition} ダメージ:${damage||'なし'} 定価:${price||'不明'}円 出品価格:${sellPrice}円 メモ:${memo||'なし'}
+タイトルは書名+著者+状態を含め40字以内。説明文は200〜350字、本の価値を具体的に紹介、状態を正直に、らくらくメルカリ便と丁寧梱包を記載、最後に「ご不明点はお気軽にコメントください」を入れる。絵文字なし。ですます調。`, keyword: title, mode: 'book' };
+  } else {
+    const brand = document.getElementById('a-brand').value.trim();
+    const item = document.getElementById('a-item').value.trim();
+    const size = document.getElementById('a-size').value.trim();
+    const color = document.getElementById('a-color').value.trim();
+    const condition = document.getElementById('a-condition').value;
+    const sellPrice = document.getElementById('a-sell-price').value;
+    const category = document.getElementById('a-category').value;
+    const gender = document.getElementById('a-gender').value;
+    const material = document.getElementById('a-material').value.trim();
+    const damage = document.getElementById('a-damage').value.trim();
+    const memo = document.getElementById('a-memo').value.trim();
+    if (!brand || !item || !size || !color || !condition || !sellPrice) return null;
+    return { prompt: `メルカリでアパレルを出品します。以下の情報をもとに出品タイトル（40字以内）と商品説明文を作成してください。JSONのみで返してください。{"title":"...","body":"..."}
+ブランド:${brand} アイテム:${item} カテゴリ:${category||'不明'} サイズ:${size} 色:${color} 素材:${material||'不明'} 状態:${condition} 性別:${gender||'不明'} ダメージ:${damage||'なし'} 出品価格:${sellPrice}円 メモ:${memo||'なし'}
+タイトルはブランド+アイテム+サイズ+色を含め40字以内。説明文は200〜350字、シルエット・特徴・コーデ例など具体的に、状態を正直に、らくらくメルカリ便と丁寧梱包を記載、最後に「ご不明点はお気軽にコメントください」を入れる。絵文字なし。ですます調。`, keyword: `${brand} ${item}`, mode: 'apparel' };
+  }
+}
+
+function getMercariSearchUrl(keyword) {
+  return `https://jp.mercari.com/search?keyword=${encodeURIComponent(keyword)}&status=sold_out`;
+}
+
+async function generate() {
+  const key = getApiKey();
+  if (!key) { alert('設定ページでAPIキーを登録してください'); return; }
+  const pData = getPrompt();
+  if (!pData) { document.getElementById('gen-error').style.display='block'; document.getElementById('gen-error').textContent='必須項目（*）をすべて入力してください。'; return; }
+  document.getElementById('gen-error').style.display='none';
+  document.getElementById('gen-btn').disabled = true;
+  document.getElementById('gen-loading').style.display='flex';
+  document.getElementById('result-area').style.display='none';
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: pData.prompt }] })
+    });
+    const data = await res.json();
+    const text = data.content.map(c => c.text||'').join('');
+    const clean = text.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(clean);
+    const title = parsed.title || '';
+    const body = (parsed.body || '').replace(/\\n/g,'\n');
+
+    document.getElementById('res-title').textContent = title;
+    document.getElementById('res-body').textContent = body;
+    document.getElementById('title-count').textContent = title.length + '字';
+
+    // Mercari search button
+    const searchUrl = getMercariSearchUrl(pData.keyword);
+    document.getElementById('mercari-search-wrap').innerHTML = `
+      <a href="${searchUrl}" target="_blank" class="mercari-btn">
+        🔍 メルカリで「${pData.keyword}」の相場を確認する →
+      </a>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:5px;">売り切れ済みで実際の成約価格を確認できます</div>
+    `;
+
+    document.getElementById('result-area').style.display='block';
+    document.getElementById('result-area').scrollIntoView({behavior:'smooth', block:'start'});
+  } catch(e) {
+    document.getElementById('gen-error').style.display='block';
+    document.getElementById('gen-error').textContent='エラーが発生しました。APIキーと入力内容を確認してください。';
+  }
+  document.getElementById('gen-btn').disabled = false;
+  document.getElementById('gen-loading').style.display='none';
+}
+
+// Copy
+function copyEl(id, btn) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✅ コピー完了';
+    setTimeout(() => btn.textContent = orig, 1800);
+  });
+}
+
+// History
+function saveHistory() {
+  const title = document.getElementById('res-title').textContent;
+  const body = document.getElementById('res-body').textContent;
+  if (!title) return;
+  const history = JSON.parse(localStorage.getItem('sedori_history') || '[]');
+  history.unshift({ id: Date.now(), mode: currentMode, title, body, date: new Date().toLocaleDateString('ja-JP') });
+  if (history.length > 50) history.pop();
+  localStorage.setItem('sedori_history', JSON.stringify(history));
+  const btn = event.target;
+  btn.textContent = '✅ 保存完了';
+  setTimeout(() => btn.textContent = '保存', 1800);
+}
+
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  const history = JSON.parse(localStorage.getItem('sedori_history') || '[]');
+  if (!history.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📂</div><div class="empty-text">保存した出品文がまだありません</div></div>';
+    return;
+  }
+  list.innerHTML = history.map(h => `
+    <div class="history-item" onclick="loadHistory(${h.id})">
+      <div class="history-meta">
+        <span class="tag history-type">${h.mode === 'book' ? '📚 古本' : '👕 アパレル'}</span>
+        <span class="history-date">${h.date}</span>
+      </div>
+      <div class="history-name">${h.title}</div>
+      <div class="history-preview">${h.body}</div>
+    </div>
+  `).join('');
+}
+
+function loadHistory(id) {
+  const history = JSON.parse(localStorage.getItem('sedori_history') || '[]');
+  const item = history.find(h => h.id === id);
+  if (!item) return;
+  document.getElementById('res-title').textContent = item.title;
+  document.getElementById('res-body').textContent = item.body;
+  document.getElementById('title-count').textContent = item.title.length + '字';
+  document.getElementById('result-area').style.display = 'block';
+  switchPage('generate', document.querySelector('.nav-item'));
+  document.querySelectorAll('.nav-item').forEach((b,i) => b.classList.toggle('active', i===0));
+}
+
+// Profit calculator
+function calcProfit() {
+  const cost = parseFloat(document.getElementById('cost').value) || 0;
+  const sell = parseFloat(document.getElementById('sell').value) || 0;
+  const ship = parseFloat(document.getElementById('ship').value) || 0;
+  if (!sell) { document.getElementById('profit-result').style.display='none'; return; }
+  const fee = Math.round(sell * 0.1);
+  const profit = sell - fee - ship - cost;
+  const margin = sell > 0 ? Math.round((profit / sell) * 100) : 0;
+  document.getElementById('fee-val').textContent = `-${fee.toLocaleString()}円`;
+  document.getElementById('profit-val').textContent = `${profit.toLocaleString()}円`;
+  document.getElementById('profit-val').style.color = profit >= 0 ? 'var(--success)' : '#ef4444';
+  document.getElementById('margin-val').textContent = `${margin}%`;
+  document.getElementById('margin-val').style.color = margin >= 20 ? 'var(--success)' : margin >= 10 ? '#f59e0b' : '#ef4444';
+  document.getElementById('profit-result').style.display = 'block';
+}
+</script>
+</body>
+</html>
