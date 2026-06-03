@@ -729,7 +729,7 @@ async function analyzePhoto() {
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514', max_tokens: 500,
+        model: 'claude-sonnet-4-5', max_tokens: 500,
         messages: [{ role: 'user', content: [
           { type: 'image', source: { type: 'base64', media_type: photoType, data: photoBase64 } },
           { type: 'text', text: prompt }
@@ -853,7 +853,7 @@ async function generate() {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: pData.prompt }] })
+      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 1000, messages: [{ role: 'user', content: pData.prompt }] })
     });
     const data = await res.json();
     const text = data.content.map(c => c.text||'').join('');
