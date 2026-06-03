@@ -722,7 +722,12 @@ async function analyzePhoto() {
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514', max_tokens: 500,
         messages: [{ role: 'user', content: [
@@ -731,6 +736,10 @@ async function analyzePhoto() {
         ]}]
       })
     });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error?.message || `HTTP ${res.status}`);
+    }
     const data = await res.json();
     const text = data.content.map(c => c.text || '').join('');
     const clean = text.replace(/```json|```/g, '').trim();
@@ -749,7 +758,7 @@ async function analyzePhoto() {
 
     document.getElementById('analyze-result').style.display = 'block';
   } catch(e) {
-    alert('読み取りに失敗しました。もう一度お試しください。');
+    alert('読み取りに失敗しました: ' + e.message);
   }
   document.getElementById('analyze-loading').style.display = 'none';
   document.getElementById('analyze-btn').style.display = 'block';
@@ -843,7 +852,7 @@ async function generate() {
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: pData.prompt }] })
     });
     const data = await res.json();
